@@ -4,15 +4,20 @@
 import requests
 import io, json
 import certifi
+import socket
 from netifaces import interfaces, ifaddresses, AF_INET
 
 HOSTNAME="MYHOST"   # hostname (including subdomain)
 APIKEY="MYAPIKEY"  # DDNSS Token (Accounts > Domain List > Advanced DNS)
 
-def getIP():
+def getSystemIP():
     for ifaceName in interfaces():
         addresses = [i['addr'] for i in ifaddresses(ifaceName).setdefault(AF_INET, [{'addr':'No IP addr'}] )]
     return ' '.join(addresses)
+
+def getDnsIP(host):
+    host_ip = socket.gethostbyname(host)
+    return host_ip
 
 def updateRecord(ip):
     global HOSTNAME
@@ -21,11 +26,20 @@ def updateRecord(ip):
     url = ddns_upd+"?key=" + APIKEY + "&host=" + HOSTNAME + "&ip=" + ip
     return requests.get(url, verify=certifi.where())
 
-ip = getIP()
-print("External IP: " + ip)
-r = updateRecord(ip)
+registered_ip = getDnsIP(HOSTNAME)
+# print("Registered IP: " + registered_ip)
 
-if r.status_code == 200:
-    print("Updete IP success!")
+current_ip = getSystemIP()
+# print("External IP: " + current_ip)
+
+result = ''
+if registered_ip != current_ip:
+    r = updateRecord(current_ip)
+    if r.status_code == 200:
+        result = "[UPDATE] successfully update host [" + HOSTNAME +"] to IP [" + current_ip +"]"
+    else:
+        result = "[ERROR] API error\n" + r.content
 else:
-    print("API error\n" + r.content)
+    result = "[SKIPPED] IP already registered - not changed"
+
+print(result)
