@@ -1,0 +1,31 @@
+#!/usr/bin/env python3
+# encoding: utf-8
+
+import requests
+import io, json
+import certifi
+from netifaces import interfaces, ifaddresses, AF_INET
+
+HOSTNAME="MYHOST"   # hostname (including subdomain)
+APIKEY="MYAPIKEY"  # DDNSS Token (Accounts > Domain List > Advanced DNS)
+
+def getIP():
+    for ifaceName in interfaces():
+        addresses = [i['addr'] for i in ifaddresses(ifaceName).setdefault(AF_INET, [{'addr':'No IP addr'}] )]
+    return ' '.join(addresses)
+
+def updateRecord(ip):
+    global HOSTNAME
+    global APIKEY
+    ddns_upd = "https://www.ddnss.de/upd.php"
+    url = ddns_upd+"?key=" + APIKEY + "&host=" + HOSTNAME + "&ip=" + ip
+    return requests.get(url, verify=certifi.where())
+
+ip = getIP()
+print("External IP: " + ip)
+r = updateRecord(ip)
+
+if r.status_code == 200:
+    print("Updete IP success!")
+else:
+    print("API error\n" + r.content)
