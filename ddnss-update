@@ -36,7 +36,7 @@ result = ''
 if registered_ip != current_ip:
     r = updateRecord(current_ip)
     if r.status_code == 200:
-        result = "[UPDATE] successfully update host [" + HOSTNAME +"] to IP [" + current_ip +"]"
+        result = "[UPDATE] successfully updated host [" + HOSTNAME +"] to IP [" + current_ip +"]"
     else:
         result = "[ERROR] API error\n" + r.content
 else:
